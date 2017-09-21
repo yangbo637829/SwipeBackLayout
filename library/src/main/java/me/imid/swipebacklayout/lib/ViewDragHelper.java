@@ -21,6 +21,7 @@ import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.VelocityTrackerCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ScrollerCompat;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -1364,6 +1365,7 @@ public class ViewDragHelper {
         final boolean checkHorizontal = mCallback.getViewHorizontalDragRange(child) > 0;
         final boolean checkVertical = mCallback.getViewVerticalDragRange(child) > 0;
 
+        Log.d("yangbo", "checkTouchSlop() called with: checkHorizontal = " + checkHorizontal + " , checkVertical = " + checkVertical);
         if (checkHorizontal && checkVertical) {
             return dx * dx + dy * dy > mTouchSlop * mTouchSlop;
         } else if (checkHorizontal) {
@@ -1565,16 +1567,33 @@ public class ViewDragHelper {
 
     private int getEdgeTouched(int x, int y) {
         int result = 0;
-
-        if (x < mParentView.getLeft() + mEdgeSize)
-            result = EDGE_LEFT;
-        if (y < mParentView.getTop() + mEdgeSize)
-            result = EDGE_TOP;
-        if (x > mParentView.getRight() - mEdgeSize)
-            result = EDGE_RIGHT;
-        if (y > mParentView.getBottom() - mEdgeSize)
-            result = EDGE_BOTTOM;
-
+//我修改一下的源码部分，为了能够全屏滑动
+//        if (x < mParentView.getLeft() + mEdgeSize)
+//            result = EDGE_LEFT;
+//        if (y < mParentView.getTop() + mEdgeSize)
+//            result = EDGE_TOP;
+//        if (x > mParentView.getRight() - mEdgeSize)
+//            result = EDGE_RIGHT;
+//        if (y > mParentView.getBottom() - mEdgeSize)
+//            result = EDGE_BOTTOM;
+        if (mEnableAllEdge && SwipeBackLayout.EDGE_ALL != mTrackingEdges) {
+            result = mTrackingEdges;
+        } else {
+            if (x < mParentView.getLeft() + mEdgeSize)
+                result = EDGE_LEFT;
+            if (y < mParentView.getTop() + mEdgeSize)
+                result = EDGE_TOP;
+            if (x > mParentView.getRight() - mEdgeSize)
+                result = EDGE_RIGHT;
+            if (y > mParentView.getBottom() - mEdgeSize)
+                result = EDGE_BOTTOM;
+        }
         return result;
+    }
+
+    private boolean mEnableAllEdge;
+
+    public void setEnableAllEdge(boolean enableAllEdge) {
+        this.mEnableAllEdge = enableAllEdge;
     }
 }
