@@ -1,102 +1,44 @@
 SwipeBackLayout
 ===
+本库Fork自[SwipeBackLayout](https://github.com/ikew0ng/SwipeBackLayout),主要增加了两个功能：
+ 1. 全局滑动的支持，参照[博客](http://blog.csdn.net/u013003052/article/details/50448617)中的提示，但实现更加简洁，但是在选择All时无法全局滑动。
+ 2. 实现从顶部下拉滑动功能。参照[UltimateSwipeTool](https://github.com/CameloeAnthony/UltimateSwipeTool)中的`SwipeBackLayout`，适当做了修改，确保效果和功能正常。
 
-An Android library that help you to build app with swipe back gesture.
-
-
-![](https://github.com/Issacw0ng/SwipeBackLayout/blob/master/art/screenshot.png?raw=true)
-
-
-Demo Apk
-===
-[GooglePlay](https://play.google.com/store/apps/details?id=me.imid.swipebacklayout.demo)
-
-
-Requirement
-===
-The latest android-support-v4.jar should be referenced by your project.
-
-Usage
-===
-1. Add SwipeBackLayout as a dependency to your existing project.
-2. To enable SwipeBackLayout, you can simply make your `Activity` extend `SwipeBackActivity`:
-	* In `onCreate` method, `setContentView()` should be called as usual.
-	* You will have access to the `getSwipeBackLayout()` method so you can customize the `SwipeBackLayout`. 
-3. Make window translucent by adding `<item name="android:windowIsTranslucent">true</item>` to your theme.
-
-Simple Example
-===
+实现下拉滑动功能时最大的难点是在释放的时候：
 ```
-public class DemoActivity extends SwipeBackActivity implements View.OnClickListener {
-    private int[] mBgColors;
+...
+@Override
+public void onViewReleased(View releasedChild, float xvel, float yvel) {
+		final int childWidth = releasedChild.getWidth();
+		final int childHeight = releasedChild.getHeight();
 
-    private static int mBgIndex = 0;
+		int left = 0, top = 0;
+		if ((mTrackingEdge & EDGE_LEFT) != 0) {
+				left = xvel > 0 || xvel == 0 && mScrollPercent > mScrollThreshold ? childWidth
+								+ mShadowLeft.getIntrinsicWidth() + OVERSCROLL_DISTANCE : 0;
+		} else if ((mTrackingEdge & EDGE_RIGHT) != 0) {
+				left = xvel < 0 || xvel == 0 && mScrollPercent > mScrollThreshold ? -(childWidth
+								+ mShadowLeft.getIntrinsicWidth() + OVERSCROLL_DISTANCE) : 0;
+		} else if ((mTrackingEdge & EDGE_TOP) != 0) {
+				top = yvel > 0 || yvel == 0 && mScrollPercent > mScrollThreshold ? (childHeight
+								+ mShadowTop.getIntrinsicHeight() + OVERSCROLL_DISTANCE) : 0;
+		} else if ((mTrackingEdge & EDGE_BOTTOM) != 0) {
+				top = yvel < 0 || yvel == 0 && mScrollPercent > mScrollThreshold ? -(childHeight
+								+ mShadowBottom.getIntrinsicHeight() + OVERSCROLL_DISTANCE) : 0;
+		}
 
-    private String mKeyTrackingMode;
-
-    private RadioGroup mTrackingModeGroup;
-
-    private SwipeBackLayout mSwipeBackLayout;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_demo);
-        changeActionBarColor();
-        findViews();
-        mKeyTrackingMode = getString(R.string.key_tracking_mode);
-        mSwipeBackLayout = getSwipeBackLayout();
-
-        mTrackingModeGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                int edgeFlag;
-                switch (checkedId) {
-                    case R.id.mode_left:
-                        edgeFlag = SwipeBackLayout.EDGE_LEFT;
-                        break;
-                    case R.id.mode_right:
-                        edgeFlag = SwipeBackLayout.EDGE_RIGHT;
-                        break;
-                    case R.id.mode_bottom:
-                        edgeFlag = SwipeBackLayout.EDGE_BOTTOM;
-                        break;
-                    default:
-                        edgeFlag = SwipeBackLayout.EDGE_ALL;
-                }
-                mSwipeBackLayout.setEdgeTrackingEnabled(edgeFlag);
-                saveTrackingMode(edgeFlag);
-            }
-        });
-    }
+		mDragHelper.settleCapturedViewAt(left, top);
+		invalidate();
+}
 ...
 ```
 
-Download
-===
-Download via Jcenter:
+对于新功能的使用：
 ```
-compile 'me.imid.swipebacklayout.lib:library:1.0.0'
+mSwipeBackLayout.setEnableAllEdge(true);
 ```
+即可实现全局滑动手势。
 
+新增的`EDGE_TOP`与其他的功能相似，使用相同的api`setEdgeTrackingEnabled`即可。
 
-Pull Requests
-===
-I will gladly accept pull requests for fixes and feature enhancements but please do them in the develop branch.
-
-License
-===
-
-   Copyright 2013 Issac Wong
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+其他介绍参见原库[README](https://github.com/ikew0ng/SwipeBackLayout/blob/master/README.md)
